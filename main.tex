@@ -1,0 +1,241 @@
+\documentclass[11pt]{article}
+
+\usepackage{amsmath, amssymb, graphicx, hyperref, caption}
+\usepackage[margin=1in]{geometry}
+\usepackage{float}
+\usepackage{color}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,  
+    urlcolor=blue,
+    pdftitle={CTA200 Project Report},
+    pdfpagemode=FullScreen,
+}
+
+\title{Kinematic and Structural Analysis of Young Stellar Associations: CFN and SCYA-89}
+\author{Mayesha Rahaman}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\section*{Introduction}
+This project investigates the structure and kinematics of two young stellar associations: Cepheus Far North (CFN) and SCYA-89. Using astrometric and photometric data, we perform coordinate transformations, velocity calculations, clustering analysis, and age estimation. Python scripts were used for data processing, figure generation, and optimization routines. This report summarizes the approach and findings in detail, organized step-by-step according to the assignment guidelines.
+
+\section*{Main Project}
+
+\subsection*{1. RA/Dec Coordinates and Proper Motions}
+We begin by loading the CFN and SCYA-89 datasets into pandas DataFrames. For each association, we plot the right ascension vs declination, as well as the proper motions in RA and Dec (pmra vs pmdec) to visualize their sky distribution and motion. For CFN, we apply a 180-degree shift to the right ascension values to eliminate a discontinuity.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.45\textwidth]{ra_dec.png}
+    \includegraphics[width=0.45\textwidth]{prop.png}
+    \caption{Left: Sky coordinates of CFN in RA vs Dec. Right: Proper motions in RA and Dec.}
+    \label{fig:radec_pm}
+\end{figure}
+
+Figure~\ref{fig:radec_pm} provides an overview of both the spatial and kinematic trends of CFN members. These visualizations reveal the spatial distribution and bulk motion of the association.
+
+
+\subsection*{2. Galactic Coordinate Conversion}
+We convert RA/Dec coordinates to Galactic coordinates $(\ell, b)$ using the provided gal function which uses the Astropy \texttt{SkyCoord} transformation. For the CFN association, we verify the results against the SPYGLASS interactive visualization to ensure the axes values line up, then use the same code for SCYA-89. 
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.6\textwidth]{gal_lb.png}
+    \caption{Galactic sky coordinates $(\ell, b)$}
+    \label{fig:gal_lb}
+\end{figure}
+
+Figure~\ref{fig:gal_lb} shows the distribution of stars in Galactic coordinates.
+
+
+\subsection*{3. Galactic Cartesian Coordinates}
+The galactic Cartesian coordinates $(X, Y, Z)$ are computed using the provided \texttt{gal\_xyz} function. This function takes Galactic longitude $\ell$, latitude $b$ (or optionally RA and Dec), and either parallax or distance to return Cartesian positions in parsecs. The conversion is based on the following equations:
+\begin{align}
+    x &= d \cdot \cos b \cdot \cos \ell \\
+    y &= d \cdot \cos b \cdot \sin \ell \\
+    z &= d \cdot \sin b \label{eq:xyz}
+\end{align}
+where $\ell$ and $b$ are in radians and $d$ is the distance in parsecs. These coordinates align the $x$-axis away from the Galactic center (positive toward the anticenter), consistent with the definition of the $U$ velocity component. As seen in Figure~\ref{fig:xyz}, we generate three 2D projections: $X$ vs $Y$, $X$ vs $Z$, and $Y$ vs $Z$, and compare them to SPYGLASS-II Figure 6.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.4\textwidth]{x vs y.png}
+    \includegraphics[width=0.4\textwidth]{x vs z.png}
+    \includegraphics[width=0.4\textwidth]{y vs z.png}
+    \caption{Cartesian projections in Galactic coordinates. Left: $X$ vs $Y$. Center: $X$ vs $Z$. Right: $Y$ vs $Z$.}
+    \label{fig:xyz}
+\end{figure}
+
+
+\subsection*{4. Transverse Velocities}
+To compute transverse velocities from proper motion, we first convert proper motions from RA/Dec to Galactic coordinates using the \texttt{pmgal} function, which uses \texttt{astropy}'s built-in transformation tools. We then apply the function \texttt{Vt}, which calculates transverse velocity components $v_{t\ell}$ and $v_{tb}$ using:
+\begin{equation}
+    v_{t\ell} = \frac{d \cdot pml}{206264807} \cdot \texttt{pctokm} \div \texttt{ytos}, \quad v_{tb} = \frac{d \cdot pmb}{206264807} \cdot \texttt{pctokm} \div \texttt{ytos}
+    \label{eq:vt_internal}
+\end{equation}
+where $d$ is distance in parsecs, $pml, pmb$ are proper motions in Galactic longitude and latitude (in mas/yr), \texttt{pctokm} is the number of kilometers in a parsec, and \texttt{ytos} converts years to seconds. These equations reflect the internal calculation and ensure proper unit handling. We visualize the resulting velocity field by plotting $v_{t\ell}$ vs $v_{tb}$.
+
+
+\subsection*{5. UVW Space Velocities}
+Full 3D space velocities (U, V, W) are obtained using the \texttt{gal\_uvw} function from pyutils, which implements the transformation described by Johnson \& Soderblom (1987). This method converts proper motion, radial velocity, and distance into Cartesian velocities in the Galactic frame, where:
+\begin{itemize}
+  \item $U$ is positive toward the Galactic anticenter
+  \item $V$ is positive in the direction of Galactic rotation
+  \item $W$ is positive toward the North Galactic Pole
+\end{itemize}
+We apply this to our dataset by inputting RA, Dec, proper motions (pmra/pmdec), radial velocities, and distances. In Figure~\ref{fig:uvw}, we plot $U$ vs $V$, $U$ vs $W$, and $V$ vs $W$ to visualize the kinematic distribution. We also compute the average values of each velocity component.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.4\textwidth]{U vs V.png}
+    \includegraphics[width=0.4\textwidth]{U vs W.png}
+    \includegraphics[width=0.4\textwidth]{V vs W.png}
+    \caption{Cartesian Velocities. Left: $U$ vs $V$. Center: $U$ vs $W$. Right: $V$ vs $W$.}
+    \label{fig:uvw}
+\end{figure}
+
+
+\subsection*{6. Projected UVW Vectors}
+We compute the projected transverse velocity components corresponding to the mean bulk motion of the association. First, we create arrays filled with the average values of $U$, $V$, and $W$ computed in the previous step. These constant vectors are then passed into the \texttt{propmot} function, which inverts the UVW transformation and returns the radial velocity and proper motions in RA and Dec corresponding to the mean space velocity.
+
+Proper motions are then converted back into Galactic coordinates using \texttt{pmgal}, and the projected transverse velocity components $v_{t\ell}^{\text{proj}}, v_{tb}^{\text{proj}}$ are calculated using the \texttt{Vt} function as described in Section 4.
+
+
+\subsection*{7. Transverse Velocity Anomalies}
+Subtracting the projected mean UVW transverse velocity vector from each star's transverse velocity yields the transverse velocity anomaly. This helps identify outliers and internal kinematic structure, which we compare to SPYGLASS-II Figure 7 for CFN.
+
+Subtracting the projected mean UVW transverse velocity vector from each star's transverse velocity yields the transverse velocity anomaly. This highlights deviations from bulk motion. These residuals are then plotted in Figure~\ref{fig:anom} to assess internal kinematic structure. The results are compared to SPYGLASS-II Figure 7 for CFN.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.6\textwidth]{anom.png}
+    \caption{Transverse velocity anomalies. Each point represents the deviation of a star's transverse velocity from the projected mean UVW vector, plotted in the $(\Delta v_{t\ell}, \Delta v_{tb})$ plane.}
+    \label{fig:anom}
+\end{figure}
+
+
+\subsection*{8. Repeat for SCYA-89}
+Steps 1 through 7 are repeated for SCYA-89. To reduce contamination and isolate pre-main sequence stars, we apply three filtering conditions:
+\begin{itemize}
+  \item $P_{\text{mem}} > 0.3$ to retain high-probability spatial members,
+  \item $P_{\text{sp}} > 0.2$, where $P_{\text{sp}}$ is the joint spatial-photometric probability derived from $P_{\text{mem}}$ and $P_{\text{young}}$ using a Bayesian prior $P_i = 50 / 11200$,
+  \item Non-zero astrometric flags,
+  \item Non-zero photometric flags.
+\end{itemize}
+
+This ensures we retain reliable astrometric and photometric data and exclude spurious measurements. The same visualizations are reproduced below for SCYA-89.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.45\textwidth]{scya_ra_dec.png}
+    \includegraphics[width=0.45\textwidth]{scya_prop.png}
+    \caption{Left: Sky coordinates in RA vs Dec. Right: Proper motions in RA and Dec.}
+    \label{fig:scya89_radec_pm}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.6\textwidth]{scya_gal_lb.png}
+    \caption{Galactic sky coordinates $(\ell, b)$}
+    \label{fig:scya89_gallb}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.32\textwidth]{scya_xy.png}
+    \includegraphics[width=0.32\textwidth]{scya_xz.png}
+    \includegraphics[width=0.32\textwidth]{scya_yz.png}
+    \caption{Cartesian projections in Galactic coordinates. Left: $X$ vs $Y$. Center: $X$ vs $Z$. Right: $Y$ vs $Z$.}
+    \label{fig:scya89_xyz}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.32\textwidth]{scya_uv.png}
+    \includegraphics[width=0.32\textwidth]{scya_uw.png}
+    \includegraphics[width=0.32\textwidth]{scya_vw.png}
+    \caption{Cartesian Velocities. Left: $U$ vs $V$. Center: $U$ vs $W$. Right: $V$ vs $W$.}
+    \label{fig:scya89_uvw}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.6\textwidth]{scya_anom.png}
+    \caption{Transverse velocity anomalies. Each point represents the deviation of a star's transverse velocity from the projected mean UVW vector, plotted in the $(\Delta v_{t\ell}, \Delta v_{tb})$ plane.}
+    \label{fig:scya89_vtanomaly}
+\end{figure}
+
+
+\subsection*{9. Color-Magnitude Diagram (CMD)}
+To investigate the photometric properties of the SCYA-89 association, we construct a color-magnitude diagram (CMD) using Gaia DR3 photometry. We compute the absolute $G$-band magnitude $M_G$ from the apparent $G$ magnitude and distance using the standard distance modulus:
+\begin{equation}
+    M_G = G - 5 \cdot \log_{10}\left(\frac{d}{10}\right)
+    \label{eq:mg}
+\end{equation}
+where $G$ is the apparent magnitude and $d$ is the distance in parsecs. The color is computed as $G_{\text{BP}} - G_{\text{RP}}$.
+
+We plot $M_G$ vs $G_{\text{BP}} - G_{\text{RP}}$, inverting the y-axis so it is oriented towards increasing brightness.
+
+The resulting CMD, in Figure~\ref{fig:cmd}, shows a distinct population of young, luminous stars consistent with pre-main sequence evolution. This diagram also forms the foundation for the isochrone-fitting routine in the bonus age estimation section.
+
+As shown in Equation~\ref{eq:mg}, absolute magnitude is derived directly from distance and apparent magnitude assuming negligible extinction.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.6\textwidth]{cmd.png}
+    \caption{Color-magnitude diagram of SCYA-89 showing $M_G$ vs $G_{\text{BP}} - G_{\text{RP}}$ for filtered members.}
+    \label{fig:cmd}
+\end{figure}
+
+
+\subsection*{10. HDBSCAN Clustering}
+We install and run the HDBSCAN clustering algorithm on SCYA-89 using a 5D array composed of combinations such as ($X$, $Y$, $Z$, $v_{t\ell}$, $v_{tb}$) and others suggested by SPYGLASS-VI. We scale the velocity dimensions to match the spatial scales.
+
+
+\subsection*{11. Coordinate Experiments}
+To evaluate different clustering strategies, we apply the HDBSCAN algorithm to SCYA-89 using four different coordinate combinations. All methods use a velocity scaling factor of 8 to bring kinematic and spatial dimensions to comparable scales. The clustering is performed using \texttt{HDBSCAN} with \texttt{min\_cluster\_size = 7} and \texttt{min\_samples = 7}, with the leaf cluster selection method.\\
+
+\textbf{Method A: $(X, Y, Z, v_{t\ell}, v_{tb})$}
+We cluster in 3D Cartesian position coordinates combined with scaled transverse velocities:
+\begin{itemize}
+  \item $X$, $Y$, $Z$ from galactic Cartesian transformation
+  \item $v_{t\ell}$ and $v_{tb}$ scaled by the velocity factor
+\end{itemize}
+This method resembles the original SPYGLASS-II approach and is sensitive to both position and velocity.\\
+
+\textbf{Method B: $(\ell, b, d, v_{t\ell}, v_{tb})$ with projected angular coordinates}
+Here, angular coordinates $(\ell, b)$ are projected to Cartesian distances using the average distance to avoid uncertainty amplification:
+\begin{itemize}
+  \item $\ell \cdot d_{\text{avg}}$, $b \cdot d_{\text{avg}}$, and $d$
+  \item Transverse velocities $v_{t\ell}$, $v_{tb}$ (scaled)
+\end{itemize}
+This approach balances position information with minimized distance-based spread.\\
+
+\textbf{Method C: $(\ell, b, d, \mu_\ell, \mu_b)$}
+We cluster using proper motions instead of transverse velocities to decouple the distance dependency:
+\begin{itemize}
+  \item Angular position and distance: $\ell$, $b$, $d$
+  \item Proper motions: $\mu_\ell$, $\mu_b$
+\end{itemize}
+This method reduces the impact of distance uncertainties on the velocity dimensions.\\
+
+\textbf{Method D: $(\ell, b, d, \Delta v_{t\ell}, \Delta v_{tb})$}
+We use transverse velocity anomalies computed with an average distance to define velocity structure relative to bulk motion. This captures deviations from the mean projected motion, enhancing contrast between dynamically coherent groups.
+
+\subsection*{12. Clustering Visualization}
+We visualize the clustering results in various coordinate projections as seen in Figure~\ref{fig:clusters}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{clusters.png}
+    \caption{HDBSCAN clustering in $XYZ$ space for SCYA-89. Colors indicate distinct clusters.}
+    \label{fig:clusters}
+\end{figure}
+
+
+\end{document}
