@@ -22,7 +22,7 @@
 \maketitle
 
 \section*{Introduction}
-This project investigates the structure and kinematics of two young stellar associations: Cepheus Far North (CFN) and SCYA-89. Using astrometric and photometric data, we perform coordinate transformations, velocity calculations, clustering analysis, and age estimation. Python scripts were used for data processing, figure generation, and optimization routines. This report summarizes the approach and findings in detail, organized step-by-step according to the assignment guidelines.
+This project investigates the structure and kinematics of two young stellar associations: Cepheus Far North (CFN) and SCYA-89. Using astrometric and photometric data, we perform coordinate transformations, velocity calculations and clustering analysis. Python scripts were used for data processing, figure generation, and optimization routines. This report summarizes the approach and findings in detail, organized step-by-step according to the assignment guidelines.
 
 \section*{Main Project}
 
@@ -181,7 +181,7 @@ where $G$ is the apparent magnitude and $d$ is the distance in parsecs. The colo
 
 We plot $M_G$ vs $G_{\text{BP}} - G_{\text{RP}}$, inverting the y-axis so it is oriented towards increasing brightness.
 
-The resulting CMD, in Figure~\ref{fig:cmd}, shows a distinct population of young, luminous stars consistent with pre-main sequence evolution. This diagram also forms the foundation for the isochrone-fitting routine in the bonus age estimation section.
+The resulting CMD, in Figure~\ref{fig:cmd}, shows a distinct population of young, luminous stars consistent with pre-main sequence evolution. 
 
 As shown in Equation~\ref{eq:mg}, absolute magnitude is derived directly from distance and apparent magnitude assuming negligible extinction.
 
@@ -194,7 +194,7 @@ As shown in Equation~\ref{eq:mg}, absolute magnitude is derived directly from di
 
 
 \subsection*{10. HDBSCAN Clustering}
-We install and run the HDBSCAN clustering algorithm on SCYA-89 using a 5D array composed of combinations such as ($X$, $Y$, $Z$, $v_{t\ell}$, $v_{tb}$) and others suggested by SPYGLASS-VI. We scale the velocity dimensions to match the spatial scales.
+We install and run the HDBSCAN clustering algorithm on SCYA-89 using a 5D array composed of combinations such as ($X$, $Y$, $Z$, $v_{t\ell}$, $v_{tb}$) and others, scaling the velocity dimensions to match the spatial scales.
 
 
 \subsection*{11. Coordinate Experiments}
